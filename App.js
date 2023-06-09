@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Text, View, StyleSheet, AppState } from 'react-native';
-import DeviceInfo from 'react-native-device-info';
 
 export default function App() {
   const [appActivities, setAppActivities] = useState([]);
@@ -10,10 +9,12 @@ export default function App() {
     AppState.addEventListener('change', handleAppStateChange);
 
     // Fetch initial app activity
-    fetchAppActivities();
+    fetchAppActivities(AppState.currentState);
 
     // Poll every 5 seconds
-    const interval = setInterval(fetchAppActivities, 5000);
+    const interval = setInterval(() => {
+      fetchAppActivities(AppState.currentState);
+    }, 5000);
 
     // Clean up interval and event listener on component unmount
     return () => {
@@ -24,21 +25,26 @@ export default function App() {
 
   const handleAppStateChange = (nextAppState) => {
     // Fetch app activities on app state change
-    if (nextAppState === 'active') {
-      fetchAppActivities();
-    }
+    fetchAppActivities(nextAppState);
   };
 
-  const fetchAppActivities = async () => {
-    try {
-      const currentApp = await DeviceInfo.getApplicationName();
-      const activity = {
-        app: currentApp,
-        activity: 'Some activity data',
-      };
-      setAppActivities((prevActivities) => [...prevActivities, activity]);
-    } catch (error) {
-      console.log('Error fetching app activities:', error);
+  const fetchAppActivities = (currentAppState) => {
+    const activity = {
+      app: getAppName(currentAppState),
+      activity: currentAppState
+    };
+
+    setAppActivities((prevActivities) => [...prevActivities, activity]);
+  };
+
+  const getAppName = (appState) => {
+    switch (appState) {
+      case 'active':
+        return 'Your App Name';
+      case 'background':
+        return 'Another App Name';
+      default:
+        return 'Unknown App Name';
     }
   };
 
